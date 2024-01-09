@@ -85,16 +85,11 @@ if __name__ == '__main__':
     # The vocoder synthesizes one waveform at a time, but it's more efficient for long ones. We 
     # can concatenate the mel spectrograms to a single one.
     mel = np.concatenate(mels, axis=1)
-    # The vocoder can take a callback function to display the generation. More on that later. For 
+    #  For 
     # now we'll simply hide it like this:
     no_action = lambda *args: None
     
-    # For the sake of making this test short, we'll pass a short target length. The target length 
-    # is the length of the wav segments that are processed in parallel. E.g. for audio sampled 
-    # at 16000 Hertz, a target length of 8000 means that the target audio will be cut in chunks of
-    # 0.5 seconds which will all be generated together. The parameters here are absurdly short, and 
-    # that has a detrimental effect on the quality of the audio. The default parameters are 
-    # recommended in general.
+    # 
     vocoder.infer_waveform(mel, target=200, overlap=50, progress_callback=no_action)
     
     print("All test passed! You can now synthesize speech.\n\n")
