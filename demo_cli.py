@@ -20,14 +20,14 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument("-e", "--enc_model_fpath", type=Path, 
-                        default="encoder/saved_models/pretrained.pt",
-                        help="Path to a saved encoder")
+                        default="encoder/saved_models/pretrained/pretrained.pt",
+                        help="Path to the saved encoder model file (.pt format)")
     parser.add_argument("-s", "--syn_model_fpath", type=Path, 
                         default="synthesizer/saved_models/pretrained/pretrained.pt",
-                        help="Path to a saved synthesizer")
+                        help="Path to the saved synthesizer model file (.pt format)")
     parser.add_argument("-v", "--voc_model_fpath", type=Path, 
                         default="vocoder/saved_models/pretrained/pretrained.pt",
-                        help="Path to a saved vocoder")
+                        help="Path to the saved vocoder model file (.pt format)")
     parser.add_argument("--cpu", action="store_true", help=\
         "If True, processing is done on CPU, even when a GPU is available.")
     parser.add_argument("--no_sound", action="store_true", help=\
