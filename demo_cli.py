@@ -12,7 +12,7 @@ import argparse
 import torch
 import sys
 import os
-from audioread.exceptions import NoBackendError
+from utils.logmmse import profile_noise, denoise, to_float, from_float, NoiseProfile
 
 if __name__ == '__main__':
     ## Info & args
@@ -43,13 +43,7 @@ if __name__ == '__main__':
 
 
 
-    if not args.no_mp3_support:
-        try:
-            librosa.load("samples/1320_00000.mp3")
-        except NoBackendError:
-            print("Librosa will be unable to open mp3 files if additional software is not installed.\n"
-                  "Please install ffmpeg or add the '--no_mp3_support' option to proceed without support for mp3 files.")
-            exit(-1)
+
         
     print("Running a test of your configuration...\n")
         
