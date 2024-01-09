@@ -28,8 +28,6 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--voc_model_fpath", type=Path, 
                         default="vocoder/saved_models/pretrained/pretrained.pt",
                         help="Path to the saved vocoder model file (.pt format)")
-    parser.add_argument("--cpu", action="store_true", help=\
-        "If True, processing is done on CPU, even when a GPU is available.")
     parser.add_argument("--no_sound", action="store_true", help=\
         "If True, audio won't be played.")
     parser.add_argument("--seed", type=int, default=None, help=\
@@ -43,25 +41,9 @@ if __name__ == '__main__':
 
 
 
-
         
     print("Running a test of your configuration...\n")
         
-    if torch.cuda.is_available():
-        device_id = torch.cuda.current_device()
-        gpu_properties = torch.cuda.get_device_properties(device_id)
-        ## Print some environment information (for debugging purposes)
-        print("Found %d GPUs available. Using GPU %d (%s) of compute capability %d.%d with "
-            "%.1fGb total memory.\n" % 
-            (torch.cuda.device_count(),
-            device_id,
-            gpu_properties.name,
-            gpu_properties.major,
-            gpu_properties.minor,
-            gpu_properties.total_memory / 1e9))
-    else:
-        print("Using CPU for inference.\n")
-    
     ## Remind the user to download pretrained models if needed
     check_model_paths(encoder_path=args.enc_model_fpath,
                       synthesizer_path=args.syn_model_fpath,
