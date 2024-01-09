@@ -1,6 +1,9 @@
 from encoder.params_model import model_embedding_size as speaker_embedding_size
+from encoder.inference import load_model, is_loaded, embed_frames_batch, compute_partial_slices, embed_utterance, embed_speaker, plot_embedding_as_heatmap
+from encoder.params_model import model_embedding_size as speaker_embedding_size
 from utils.argutils import print_args
-from utils.modelutils import check_model_paths
+from utils.logmmse import profile_noise, denoise, to_float, from_float, NoiseProfile
+
 from synthesizer.inference import Synthesizer
 from encoder import inference as encoder
 from vocoder import inference as vocoder
@@ -12,7 +15,7 @@ import argparse
 import torch
 import sys
 import os
-from audioread.exceptions import NoBackendError
+from utils.logmmse import profile_noise, denoise, to_float, from_float, NoiseProfile
 
 if __name__ == '__main__':
     ## Info & args
@@ -20,16 +23,14 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument("-e", "--enc_model_fpath", type=Path, 
-                        default="encoder/saved_models/pretrained.pt",
-                        help="Path to a saved encoder")
+                        default="encoder/saved_models/pretrained/pretrained.pt",
+                        help="Path to the saved encoder model file (.pt format)")
     parser.add_argument("-s", "--syn_model_fpath", type=Path, 
                         default="synthesizer/saved_models/pretrained/pretrained.pt",
-                        help="Path to a saved synthesizer")
+                        help="Path to the saved synthesizer model file (.pt format)")
     parser.add_argument("-v", "--voc_model_fpath", type=Path, 
                         default="vocoder/saved_models/pretrained/pretrained.pt",
-                        help="Path to a saved vocoder")
-    parser.add_argument("--cpu", action="store_true", help=\
-        "If True, processing is done on CPU, even when a GPU is available.")
+                        help="Path to the saved vocoder model file (.pt format)")
     parser.add_argument("--no_sound", action="store_true", help=\
         "If True, audio won't be played.")
     parser.add_argument("--seed", type=int, default=None, help=\
@@ -41,39 +42,13 @@ if __name__ == '__main__':
     if not args.no_sound:
         import sounddevice as sd
 
-    if args.cpu:
-        # Hide GPUs from Pytorch to force CPU processing
-        os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-    if not args.no_mp3_support:
-        try:
-            librosa.load("samples/1320_00000.mp3")
-        except NoBackendError:
-            print("Librosa will be unable to open mp3 files if additional software is not installed.\n"
-                  "Please install ffmpeg or add the '--no_mp3_support' option to proceed without support for mp3 files.")
-            exit(-1)
+
         
-    print("Running a test of your configuration...\n")
-        
-    if torch.cuda.is_available():
-        device_id = torch.cuda.current_device()
-        gpu_properties = torch.cuda.get_device_properties(device_id)
-        ## Print some environment information (for debugging purposes)
-        print("Found %d GPUs available. Using GPU %d (%s) of compute capability %d.%d with "
-            "%.1fGb total memory.\n" % 
-            (torch.cuda.device_count(),
-            device_id,
-            gpu_properties.name,
-            gpu_properties.major,
-            gpu_properties.minor,
-            gpu_properties.total_memory / 1e9))
-    else:
-        print("Using CPU for inference.\n")
     
+        
     ## Remind the user to download pretrained models if needed
-    check_model_paths(encoder_path=args.enc_model_fpath,
-                      synthesizer_path=args.syn_model_fpath,
-                      vocoder_path=args.voc_model_fpath)
+    
     
     ## Load the models one by one.
     print("Preparing the encoder, the synthesizer and the vocoder...")
@@ -91,7 +66,7 @@ if __name__ == '__main__':
     # The sampling rate is the number of values (samples) recorded per second, it is set to
     # 16000 for the encoder. Creating an array of length <sampling_rate> will always correspond 
     # to an audio of 1 second.
-    print("\tTesting the encoder...")
+    
     encoder.embed_utterance(np.zeros(encoder.sampling_rate))
     
     # Create a dummy embedding. You would normally use the embedding that encoder.embed_utterance
@@ -105,22 +80,17 @@ if __name__ == '__main__':
     # illustrate that
     embeds = [embed, np.zeros(speaker_embedding_size)]
     texts = ["test 1", "test 2"]
-    print("\tTesting the synthesizer... (loading the model will output a lot of text)")
+    
     mels = synthesizer.synthesize_spectrograms(texts, embeds)
     
     # The vocoder synthesizes one waveform at a time, but it's more efficient for long ones. We 
     # can concatenate the mel spectrograms to a single one.
     mel = np.concatenate(mels, axis=1)
-    # The vocoder can take a callback function to display the generation. More on that later. For 
+    #  For 
     # now we'll simply hide it like this:
     no_action = lambda *args: None
-    print("\tTesting the vocoder...")
-    # For the sake of making this test short, we'll pass a short target length. The target length 
-    # is the length of the wav segments that are processed in parallel. E.g. for audio sampled 
-    # at 16000 Hertz, a target length of 8000 means that the target audio will be cut in chunks of
-    # 0.5 seconds which will all be generated together. The parameters here are absurdly short, and 
-    # that has a detrimental effect on the quality of the audio. The default parameters are 
-    # recommended in general.
+    
+    # 
     vocoder.infer_waveform(mel, target=200, overlap=50, progress_callback=no_action)
     
     print("All test passed! You can now synthesize speech.\n\n")
