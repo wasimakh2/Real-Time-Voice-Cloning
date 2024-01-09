@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
 
         
-    print("Running a test of your configuration...\n")
+    
         
     ## Remind the user to download pretrained models if needed
     
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     # The sampling rate is the number of values (samples) recorded per second, it is set to
     # 16000 for the encoder. Creating an array of length <sampling_rate> will always correspond 
     # to an audio of 1 second.
-    print("\tTesting the encoder...")
+    
     encoder.embed_utterance(np.zeros(encoder.sampling_rate))
     
     # Create a dummy embedding. You would normally use the embedding that encoder.embed_utterance
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     # illustrate that
     embeds = [embed, np.zeros(speaker_embedding_size)]
     texts = ["test 1", "test 2"]
-    print("\tTesting the synthesizer... (loading the model will output a lot of text)")
+    
     mels = synthesizer.synthesize_spectrograms(texts, embeds)
     
     # The vocoder synthesizes one waveform at a time, but it's more efficient for long ones. We 
@@ -88,7 +88,7 @@ if __name__ == '__main__':
     # The vocoder can take a callback function to display the generation. More on that later. For 
     # now we'll simply hide it like this:
     no_action = lambda *args: None
-    print("\tTesting the vocoder...")
+    
     # For the sake of making this test short, we'll pass a short target length. The target length 
     # is the length of the wav segments that are processed in parallel. E.g. for audio sampled 
     # at 16000 Hertz, a target length of 8000 means that the target audio will be cut in chunks of
