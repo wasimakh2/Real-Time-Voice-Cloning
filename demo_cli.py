@@ -1,6 +1,6 @@
 from encoder.params_model import model_embedding_size as speaker_embedding_size
-from utils.argutils import print_args
-from utils.modelutils import check_model_paths
+from synthesizer.utils.argutils import print_args
+from synthesizer.utils.modelutils import check_model_paths
 from synthesizer.inference import Synthesizer
 from encoder import inference as encoder
 from vocoder import inference as vocoder
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     
     
     ## Run a test
-    print("Testing your configuration with small inputs.")
+    print("Testing your configuration with small inputs...")
     # Forward an audio waveform of zeroes that lasts 1 second. Notice how we can get the encoder's
     # sampling rate, which may differ.
     # If you're unfamiliar with digital audio, know that it is encoded as an array of floats 
