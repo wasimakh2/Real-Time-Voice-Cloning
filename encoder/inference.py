@@ -1,6 +1,6 @@
 from encoder.params_data import *
 from encoder.model import SpeakerEncoder
-from encoder.audio import preprocess_wav   # We want to expose this function from here
+from encoder.audio import preprocess_wav
 from matplotlib import cm
 from encoder import audio
 from pathlib import Path
@@ -29,7 +29,7 @@ def load_model(weights_fpath: Path, device=None):
         _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     elif isinstance(device, str):
         _device = torch.device(device)
-    _model = SpeakerEncoder(_device, torch.device("cpu"))
+    _model = SpeakerEncoder(_device, _device)
     checkpoint = torch.load(weights_fpath, _device)
     _model.load_state_dict(checkpoint["model_state"])
     _model.eval()
@@ -49,7 +49,7 @@ def embed_frames_batch(frames_batch):
     :return: the embeddings as a numpy array of float32 of shape (batch_size, model_embedding_size)
     """
     if _model is None:
-        raise Exception("Model was not loaded. Call load_model() before inference.")
+        raise ValueError("Model was not loaded. Call load_model() before inference.")
     
     frames = torch.from_numpy(frames_batch).to(_device)
     embed = _model.forward(frames).detach().cpu().numpy()
@@ -127,7 +127,19 @@ def embed_utterance(wav, using_partials=True, return_partials=False, **kwargs):
     returned. If <using_partials> is simultaneously set to False, both these values will be None 
     instead.
     """
-    # Process the entire utterance if not using partials
+    if using_partials and speaker_embedding is None:
+    wave_slices, mel_slices = compute_partial_slices(len(wav), **kwargs)
+    max_wave_length = wave_slices[-1].stop
+    if max_wave_length >= len(wav):
+        wav = np.pad(wav, (0, max_wave_length - len(wav)), "constant")
+    frames = audio.wav_to_mel_spectrogram(wav)
+    frames_batch = np.array([frames[s] for s in mel_slices])
+    partial_embeds = embed_frames_batch(frames_batch)
+    raw_embed = np.mean(partial_embeds, axis=0)
+    embed = raw_embed / np.linalg.norm(raw_embed, 2)
+    if return_partials:
+        return embed, partial_embeds, wave_slices
+    return embed
     if not using_partials:
         frames = audio.wav_to_mel_spectrogram(wav)
         embed = embed_frames_batch(frames[None, ...])[0]
@@ -156,7 +168,7 @@ def embed_utterance(wav, using_partials=True, return_partials=False, **kwargs):
 
 
 def embed_speaker(wavs, **kwargs):
-    raise NotImplemented()
+    raise NotImplementedError()
 
 
 def plot_embedding_as_heatmap(embed, ax=None, title="", shape=None, color_range=(0, 0.30)):
@@ -171,8 +183,7 @@ def plot_embedding_as_heatmap(embed, ax=None, title="", shape=None, color_range=
     cmap = cm.get_cmap()
     mappable = ax.imshow(embed, cmap=cmap)
     cbar = plt.colorbar(mappable, ax=ax, fraction=0.046, pad=0.04)
-    sm = cm.ScalarMappable(cmap=cmap)
-    sm.set_clim(*color_range)
+    cbar = plt.colorbar(mappable, ax=ax, fraction=0.046, pad=0.04)
     
     ax.set_xticks([]), ax.set_yticks([])
     ax.set_title(title)
