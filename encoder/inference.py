@@ -127,7 +127,19 @@ def embed_utterance(wav, using_partials=True, return_partials=False, **kwargs):
     returned. If <using_partials> is simultaneously set to False, both these values will be None 
     instead.
     """
-    if not using_partials and speaker_embedding is None:
+    if using_partials and speaker_embedding is None:
+    wave_slices, mel_slices = compute_partial_slices(len(wav), **kwargs)
+    max_wave_length = wave_slices[-1].stop
+    if max_wave_length >= len(wav):
+        wav = np.pad(wav, (0, max_wave_length - len(wav)), "constant")
+    frames = audio.wav_to_mel_spectrogram(wav)
+    frames_batch = np.array([frames[s] for s in mel_slices])
+    partial_embeds = embed_frames_batch(frames_batch)
+    raw_embed = np.mean(partial_embeds, axis=0)
+    embed = raw_embed / np.linalg.norm(raw_embed, 2)
+    if return_partials:
+        return embed, partial_embeds, wave_slices
+    return embed
     if not using_partials:
         frames = audio.wav_to_mel_spectrogram(wav)
         embed = embed_frames_batch(frames[None, ...])[0]
