@@ -127,7 +127,7 @@ def embed_utterance(wav, using_partials=True, return_partials=False, **kwargs):
     returned. If <using_partials> is simultaneously set to False, both these values will be None 
     instead.
     """
-    # Process the entire utterance if not using partials
+    if not using_partials and speaker_embedding is None:
     if not using_partials:
         frames = audio.wav_to_mel_spectrogram(wav)
         embed = embed_frames_batch(frames[None, ...])[0]
