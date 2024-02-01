@@ -49,7 +49,7 @@ def embed_frames_batch(frames_batch):
     :return: the embeddings as a numpy array of float32 of shape (batch_size, model_embedding_size)
     """
     if _model is None:
-        raise Exception("Model was not loaded. Call load_model() before inference.")
+        raise ValueError("Model was not loaded. Call load_model() before inference.")
     
     frames = torch.from_numpy(frames_batch).to(_device)
     embed = _model.forward(frames).detach().cpu().numpy()
