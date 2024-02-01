@@ -31,8 +31,6 @@ from scipy.special import expn
 from collections import namedtuple
 
 NoiseProfile = namedtuple("NoiseProfile", "sampling_rate window_size len1 len2 win n_fft noise_mu2")
-
-
 def profile_noise(noise, sampling_rate, window_size=0):
     """
     Creates a profile of the noise in a given waveform.
