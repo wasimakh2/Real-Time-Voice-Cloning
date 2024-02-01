@@ -168,7 +168,7 @@ def embed_utterance(wav, using_partials=True, return_partials=False, **kwargs):
 
 
 def embed_speaker(wavs, **kwargs):
-    raise NotImplemented()
+    raise NotImplementedError()
 
 
 def plot_embedding_as_heatmap(embed, ax=None, title="", shape=None, color_range=(0, 0.30)):
